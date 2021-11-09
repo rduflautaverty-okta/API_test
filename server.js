@@ -19,12 +19,10 @@ function provide(res, file) {
   res.sendFile(path.join(__dirname, file));
 }
 
-
 // Proxy API calls
 app.use(bodyParser.urlencoded({ extended: true }))
 app.use(bodyParser.json());
 app.all('/api', helper.verifytoken, helper.checkMessage);
-
 
 // Listen for requests
 app.listen(port, () => console.log(`Server app listening at http://localhost:${port}`));
