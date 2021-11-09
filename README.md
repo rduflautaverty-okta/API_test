@@ -3,7 +3,17 @@
 ## General Purpose
 This is a test application for the Okta API token and cors supported endpoints.
 ## Installation
-You can run the npm.sh bash script located in the /install folder. This will install Homebrew, NodeJS and every npm dependency.
+You can run the npm.sh bash script located in the /install folder. This will install [Homebrew](https://brew.sh/), [NodeJS](https://nodejs.org/en/) and every npm dependency:
+
+Dependencies | 
+--- |
+|npm install --save @okta/jwt-verifier|
+|npm install --save express|
+|npm install --save get-base-url|
+|npm install --save request|
+|npm install --save path|
+|npm install --save body-parser|
+
 ## Startup
 Double click on startup.sh or run the script from the Terminal.
 ## Connection
