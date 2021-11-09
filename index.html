@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta name='Okta cors test App'/>
+        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>        
+    </head>
+<body>
+
+<h4>Sample Application - MFA login and cors API</h4>
+
+<form id="logOnForm">
+    <label for="company">Company name:</label>
+    <input type="text" id="company" name="company" class="userUi"><br><br>
+    <label for="company">API Key:</label>
+    <input type="text" id="apiKey" name="apiKey" class="userUi"><br><br>
+    <label for="Domain">Domain:</label>
+    <select id="domain" name="domain" class="userUi">
+      <option value="okta">okta</option>
+      <option value="oktapreview">oktapreview</option>
+    </select><br><br>
+    <label for="fname">First name:</label>
+    <input type="text" id="fname" name="fname" class="userUi"><br><br>
+    <label for="lname">Last name:</label>
+    <input type="text" id="lname" name="lname" class="userUi"><br><br>
+    <label for="username">Username:</label>
+    <input type="text" id="username" name="username" class="userUi"><br><br>
+    <label for="password">Password:</label>
+    <input type="password" id="password" name="password" class="userUi"><br><br>
+    <input type="button" value="connect" onclick=worker.connect()>
+</form><br>
+
+<form id="corsApi" hidden>
+    <label for="company">sessions: Get current Session</label>
+    <input type="button" value="GET" onclick=worker.getCurrentSession()><br><br>
+    <label for="company">sessions: Refresh current Session</label>
+    <input type="button" value="POST" onclick=worker.refreshCurrentSession()><br><br>
+    <label for="company">sessions: Close current Session</label>
+    <input type="button" value="DELETE" onclick=worker.closeCurrentSession()><br><br>
+    <label for="company">Feature: Get a Feature</label>
+    <input type="button" value="GET" onclick=worker.getFeature()><br><br>
+    <label for="company">users: List users (non-cors)</label>
+    <input type="button" value="GET" onclick=worker.listUsers()><br><br>
+    <label for="company">users: Get User</label>
+    <input type="button" value="GET" onclick=worker.getUser()><br><br>
+    <label for="company">users: Update Current User's Profile</label>
+    <input type="button" value="POST" onclick=worker.updateUser()><br><br>
+    <label for="company">users: Get Assigned App Links</label>
+    <input type="button" value="GET" onclick=worker.assignedAppLinks()><br><br>
+    <label for="company">users: Get User's Groups</label>
+    <input type="button" value="GET" onclick=worker.getUserGroup()><br><br>
+    <label for="company">users: Clear Current User Sessions</label>
+    <input type="button" value="POST" onclick=worker.clearCurrentUserSession()><br><br>
+    <label for="company">users: Clear User Sessions</label>
+    <input type="button" value="DELETE" onclick=worker.clearAllSessions()><br><br>
+    <input type="button" value="Clear console" onclick=console.clear()><br><br>
+    <input type="button" value="Back to login" onclick=worker.disconnect()><br>
+</form><br>
+
+<hr />
+<h4>Executing:</h4>
+<span id='placeHolder'></span>
+<br>
+<hr />
+<p><a href="" id="dashboard">Okta Admin Dashboard [OIE URI]</a></p>
+
+<script src='js/storage.js'></script>
+<script src='js/environment.js'></script>
+<script src='js/api.js'></script>
+<script src='js/worker.js'></script>
+
+<script>
+    $(document).ready(function() {
+        $("#signout").hover(() => $("#signout").prop('href', env.getSignOutUrl()));
+        $("#dashboard").hover(() => $("#dashboard").prop('href', env.getAdminUrl()));
+    });
+
+</script>
+
+</body>
+</html>
