@@ -1,8 +1,8 @@
 ![alt text](https://is3-ssl.mzstatic.com/image/thumb/Purple115/v4/c3/87/9e/c3879ebe-7b27-c1af-021e-e234a326c4e5/AppIcon-1x_U007emarketing-0-6-0-85-220.png/1200x630wa.png "Okta Logo")
 # Cors Test Api
 ## General Purpose
-This is a test application for the Okta API token and cors supported endpoints
-## Installation
+This is a test application for the Okta API token and cors supported endpoints.
+## Installation
 You can run the npm.sh bash script located in the /install folder. This will install Homebrew, NodeJS and every npm dependency.
 ## Startup
 Double click on startup.sh or run the script from the Terminal.
