@@ -24,4 +24,4 @@ Once connected, the app will display the list of cors enabled APIs, exept the us
 ## Common issues
 - you should enable 3rd party cookies in your browser
 
-https://developer.okta.com/
+https://developer.okta.com
