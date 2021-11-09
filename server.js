@@ -1,11 +1,12 @@
 const express = require('express');
 const path = require("path");
-const bodyParser = require('body-parser');
 const helper = require('./js/helper.js');
 
 const app = express();
-const port = process.env.PORT || 28550;
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
+const port = process.env.PORT || 28550;
 
 // Provide files on demand
 app.get('/', (req, res) => provide(res, 'index.html'));
@@ -20,8 +21,6 @@ function provide(res, file) {
 }
 
 // Proxy API calls
-app.use(bodyParser.urlencoded({ extended: true }))
-app.use(bodyParser.json());
 app.all('/api', helper.verifytoken, helper.checkMessage);
 
 // Listen for requests
