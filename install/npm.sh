@@ -6,4 +6,3 @@ npm install --save express
 npm install --save get-base-url
 npm install --save request
 npm install --save path
-npm install --save body-parser
