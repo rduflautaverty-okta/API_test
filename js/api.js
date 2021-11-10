@@ -65,7 +65,6 @@ class API {
                     resolve(res);
                 },
                 error: function (res) {
-                    console.error(res);
                     reject(res);
                 }
             });
