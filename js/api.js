@@ -20,7 +20,6 @@ class API {
     async #get(apiUrl, extraHeaders, corsByPass = true) {
 
         return await this.#send('GET', apiUrl,'', extraHeaders, corsByPass);
-
     }
 
     async #post(apiUrl, parameters, extraHeaders, corsByPass = true) {
@@ -62,12 +61,12 @@ class API {
                     ...extraHeaders
                 },
                 success: function (res) {
-                console.log('Identity Provider response: ', res);
-                resolve(res);
+                    console.log('Identity Provider response: ', res);
+                    resolve(res);
                 },
                 error: function (res) {
-                console.error(res);
-                reject(res);
+                    console.error(res);
+                    reject(res);
                 }
             });
         });
