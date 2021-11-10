@@ -50,11 +50,11 @@ class Env {
     }    
 
     getAdminUrl() {
-        return `https://${$('#company').val()}-admin.${$('#domain').val()}.com/admin/dashboard`;
+        return `https://${$('#subdomain').val()}-admin.${$('#domain').val()}.com/admin/dashboard`;
     }
 
     getSignOutUrl() {
-        return `https://${$('#company').val()}-admin.${$('#domain').val()}.com/login/admin/signout`;
+        return `https://${$('#subdomain').val()}-admin.${$('#domain').val()}.com/login/admin/signout`;
     }
 }
 

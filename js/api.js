@@ -75,7 +75,7 @@ class API {
 
     #buildQueryUrl(api, parameters) {
         const data = this.#updateUserData();
-        let url = `https://${data.company}.${data.domain}.com/api/v1/${api}`;
+        let url = `https://${data.subdomain}.${data.domain}.com/api/v1/${api}`;
 
         if(parameters)
             url += '?' + $.param(parameters);
