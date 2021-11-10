@@ -12,7 +12,6 @@ Dependencies |
 |npm install --save get-base-url|
 |npm install --save request|
 |npm install --save path|
-|npm install --save body-parser|
 
 ## Startup
 Double click on startup.sh or run the script from the Terminal.
@@ -25,4 +24,4 @@ Once connected, the app will display the list of cors enabled APIs, exept the us
 ## Common issues
 - you should enable 3rd party cookies in your browser
 
-https://developer.okta.com/
+https://developer.okta.com
