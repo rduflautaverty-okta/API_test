@@ -2,13 +2,14 @@
 <html>
     <head>
         <meta name='Okta cors test App'/>
-        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>        
+        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/node-forge@0.7.0/dist/forge.min.js"></script>
     </head>
 <body>
 
 <h4>Sample Application - MFA login and cors API</h4>
 
-<form id="logOnForm">
+<form id="logOnForm" hidden>
     <label for="subdomain">Okta org subdomain:</label>
     <input type="text" id="subdomain" name="subdomain" class="userUi"><br><br>
     <label for="apiKey">API Key:</label>
@@ -26,6 +27,12 @@
     <input type="text" id="username" name="username" class="userUi"><br><br>
     <label for="password">Password:</label>
     <input type="password" id="password" name="password" class="userUi"><br><br>
+    <p>Connection method:
+        <input type="radio" id="implicit" name="conMethod">
+        <label for="implicit">implicit</label>
+        <input type="radio" id="PKCE" name="conMethod">
+        <label for="PKCE">PKCE</label><br>
+    </p>
     <input type="button" value="connect" onclick=worker.connect()>
 </form><br>
 

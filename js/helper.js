@@ -4,7 +4,6 @@ const request = require('request');
 
 
 exports.verifytoken = (req, res, next) => {
-
     // do a jwt check only if we use a bearer token
     const targetURL = req.header('Target-Endpoint');
 
@@ -54,13 +53,14 @@ exports.checkMessage = (req, res, next) => {
         }
 
         request({ url: targetURL, method: req.method, json: req.body, headers: {
-          'Authorization': req.header('Authorization')
+          'Authorization': req.header('Authorization'),
+          'content-type': req.header('content-type'),
+          'Accept': req.header('Accept'),
         }},
             function (error, response, body) {
                 if (error) {
                     console.error('error: ' + response?.statusCode)
             };
-	       // console.log(body);\
         }).pipe(res);
     }
 }

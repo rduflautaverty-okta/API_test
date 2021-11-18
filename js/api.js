@@ -22,9 +22,9 @@ class API {
         return await this.#send('GET', apiUrl,'', extraHeaders, corsByPass);
     }
 
-    async #post(apiUrl, parameters, extraHeaders, corsByPass = true) {
+    async #post(apiUrl, parameters, extraHeaders, corsByPass = true, urlEncode = false) {
 
-        return await this.#send('POST', apiUrl, parameters, extraHeaders, corsByPass);
+        return await this.#send('POST', apiUrl, parameters, extraHeaders, corsByPass, urlEncode);
     }
 
     async #put(apiUrl, parameters, extraHeaders, corsByPass = true) {
@@ -37,14 +37,15 @@ class API {
         return await this.#send('DELETE', apiUrl,'', extraHeaders, corsByPass);
     }
 
-    #send(method, apiUrl, params, extraHeaders, corsByPass) {
+    #send(method, apiUrl, params, extraHeaders, corsByPass, urlEncode) {
 
         env.log(method + '  ' + apiUrl);
 
         if(params)
-          console.log('Body: ', params);
-        const appType = "application/json; charset=utf-8";
+            console.log('Body: ', params);
+        let appType = urlEncode? 'application/x-www-form-urlencoded' : "application/json";
         const targetEndPoint = corsByPass ? {'Target-Endpoint': apiUrl} : '';
+        appType += "; charset=utf-8";
 
         const promise = new Promise(function(resolve, reject) {
             $.ajax({
@@ -54,10 +55,9 @@ class API {
                 data: params ? JSON.stringify(params) : '',
                 contentType: appType,
                 dataType: 'json',
-                xhrFields: { withCredentials: true },
+                //xhrFields: { withCredentials: true },
                 headers: {
                     ...targetEndPoint, // has no effect if corsByPass == false
-                    'Accept': appType,
                     ...extraHeaders
                 },
                 success: function (res) {
@@ -69,13 +69,15 @@ class API {
                 }
             });
         });
-
         return promise;
     }
 
-    #buildQueryUrl(api, parameters) {
+    #buildQueryUrl(api, parameters, OAuth = false) {
         const data = this.#updateUserData();
-        let url = `https://${data.subdomain}.${data.domain}.com/api/v1/${api}`;
+
+        let url = `https://${data.subdomain}.${data.domain}.com/`;
+        url += OAuth? `oauth2/default/v1` : `api/v1`;
+        url += `/${api}`;
 
         if(parameters)
             url += '?' + $.param(parameters);
@@ -96,7 +98,7 @@ class API {
               "login": data.username
             },
             "credentials": {
-              "password" : { "value": data.password}
+              "password" : { "value": data.password }
             }
         };
 
@@ -171,7 +173,7 @@ class API {
             "username": data.username,
             "password": data.password,
             "options": {
-              "multiOptionalFactorEnroll": false,
+              "multiOptionalFactorEnroll": true,
               "warnBeforePasswordExpired": false
             }
         };
@@ -286,6 +288,180 @@ class API {
     addUserToGroup(groupId, userId) {
         const data = this.#updateUserData();
         return this.#put(this.#buildQueryUrl(`groups/${groupId}/users/${userId}`),'', data.authorization);
+    }
+
+    findApp() {
+        const data = this.#updateUserData();
+        const params = { q : data.appName };
+        return this.#get(this.#buildQueryUrl(`apps`, params), data.authorization);
+    }
+
+    deactivateApp(appId) {
+        const data = this.#updateUserData();
+        return this.#post(this.#buildQueryUrl(`apps/${appId}/lifecycle/deactivate`),'', data.authorization);
+    }
+
+    deleteApp(appId) {
+        const data = this.#updateUserData();
+        return this.#delete(this.#buildQueryUrl(`apps/${appId}`), data.authorization);
+    }
+
+    addOAuth2Client() {
+
+        const data = this.#updateUserData();
+
+        const body = {
+            "name": "oidc_client",
+            "label": data.appName,
+            "signOnMode": "OPENID_CONNECT",
+            "credentials": {
+              "oauthClient": {
+                "token_endpoint_auth_method": "none"
+              }
+            },
+            "settings": {
+              "oauthClient": {
+                "client_uri": data.redirectUri,
+                "logo_uri": "http://developer.okta.com/assets/images/logo-new.png",
+                "redirect_uris": [
+                    data.redirectUri
+                ],
+                "response_types": [
+                  "token",
+                  "id_token",
+                  "code"
+                ],
+                "grant_types": [
+                  "implicit",
+                  "authorization_code"
+                ],
+                "application_type": "browser"
+              }
+            }
+        }
+
+        return this.#post(this.#buildQueryUrl('apps'), body, data.authorization);
+    }
+
+    assignGroupToApp(appId, groupId) {
+
+        const data = this.#updateUserData();
+        return this.#put(this.#buildQueryUrl(`apps/${appId}/groups/${groupId}`),'', data.authorization);
+    }
+
+    findtrustedOrigin() {
+        const data = this.#updateUserData();
+        const params = { q : data.appName };
+        return this.#get(this.#buildQueryUrl(`trustedOrigins`, params), data.authorization);
+    }
+
+    deactivateOrigin(trustedOriginId) {
+        const data = this.#updateUserData();
+        return this.#post(this.#buildQueryUrl(`trustedOrigins/${trustedOriginId}/lifecycle/deactivate`),'', data.authorization);
+    }
+
+    deleteOrigin(trustedOriginId) {
+        const data = this.#updateUserData();
+        return this.#delete(this.#buildQueryUrl(`trustedOrigins/${trustedOriginId}`), data.authorization);
+    }
+
+    addTrustedOrigin() {
+        const data = this.#updateUserData();
+        const body = {
+            "name": data.appName,
+            "origin": data.redirectUri,
+            "scopes": [
+              {
+                "type": "CORS"
+              },
+              {
+                "type": "REDIRECT"
+              }
+            ]
+        }
+        return this.#post(this.#buildQueryUrl(`trustedOrigins`),body, data.authorization);
+    }
+
+    getIdToken(clientId, sessionToken) {
+
+       const data = this.#updateUserData();
+
+        const params = {
+            client_id : clientId,
+            response_type : 'id_token',
+            scope : "profile openid email",
+            prompt : 'none',
+            redirect_uri : data.redirectUri,
+            sessionToken : sessionToken,
+            state : this.#randomCharacters(50),
+            nonce : this.#randomCharacters()
+        };
+
+        env.saveEnvData({ state : params.state }); // save the state to validate data later on
+        const url = this.#buildQueryUrl(`authorize`, params, true);    
+        console.log(url);
+        window.open( url /*,'_self'*/);
+    }
+
+    getAuthCode(clientId, sessionToken) {
+
+        const data = this.#updateUserData();
+        const verifier = "M25iVXpKU3puUjFaYWg3T1NDTDQtcW1ROUY5YXlwalNoc0hhakxifmZHag";
+        const challenge = "qjrzSW9gMiUgpUvqgEPE4_-8swvyCtfOVvg55o5S_es";
+ 
+        const params = {
+            client_id : clientId,
+            response_type : 'code',
+            scope : "profile openid email",
+            prompt : 'none',
+            code_challenge : challenge,
+            code_challenge_method : 'S256',
+            redirect_uri : data.redirectUri,
+            sessionToken : sessionToken,
+            state : this.#randomCharacters(50)
+        };
+
+        console.log('challenge', challenge);
+        env.saveEnvData({ state : params.state, verifier : verifier }); // save the state to validate data later on
+        const url = this.#buildQueryUrl(`authorize`, params, true);    
+        env .log(url);
+        window.open( url /*,'_self'*/);
+    }
+
+    exchangeCode(authCode, verifier, clientId, clientSecret) {
+
+        const data = this.#updateUserData();
+
+        const params = {
+            code : authCode,                                  
+            code_verifier : verifier,
+            client_id : clientId,
+            grant_type : 'authorization_code',
+            redirect_uri : data.redirectUri
+        };
+
+        return this.#post(this.#buildQueryUrl(`token`, params, true), '','', true, true);
+    }
+    
+    introspect(token, hint, clientId) {
+
+        const data = this.#updateUserData();
+
+        const params = {
+            client_id : clientId,
+            token : token,            
+            token_type_hint: hint
+        };
+        return this.#post(this.#buildQueryUrl(`introspect`, params, true),'','', true, true);
+    }
+
+    #randomCharacters(length = 10) {
+        var randomChars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+        var result = '';
+        for ( var i = 0; i < length; i++ ) {
+            result += randomChars.charAt(Math.floor(Math.random() * randomChars.length));
+        }
+        return result;
     }
 }
 

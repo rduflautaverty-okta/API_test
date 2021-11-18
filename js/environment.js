@@ -1,43 +1,69 @@
 class Env {
 
-    //#apiKey  = '00MXbVhRnmSY_C7zFqO-3N4yWy00EGnOoC0zAKB-6f';
-    #id = 'cors_api_test';
-    #storage = new Storage(this.#id);
+    #appName = 'cors_api_test';
+    #storage = new Storage(this.#appName);
+    #redirect_uri = "http://localhost:28550/";
     #items;
 
-    constructor() {       
+    constructor() {
 
-        this.#items = $('.userUi').map(function(){
-            return $(this).attr('id');
-        }).get();
-            
+        this.#items = $('.userUi').map(function() { return $(this).attr('id') }).get();            
         $('.userUi').change(() => this.#saveData());
         $('#fname').change(() => this.#updateUserName());
         $('#lname').change(() => this.#updateUserName());
-        this.#restoreData();
+        $('#implicit').change(() => this.#updateRadio());
+        $('#PKCE').change(() => this.#updateRadio());
+        
+        // data is stored as string so we need to parse it
+        $("#implicit").prop("checked", !JSON.parse(this.#restoreData('PKCE')));
+        $("#PKCE").prop("checked", JSON.parse(this.#restoreData('PKCE')));
     }
 
     #updateUserName() {
-        $('#username').val(`${$('#fname').val()}.${$('#lname').val()}@atko.email`);
-        this.#saveData()
+        this.#saveData({username : `${$('#fname').val()}.${$('#lname').val()}@atko.email`});
     }
 
-    #restoreData() {
-        let results = new Object();
-        for (let item of this.#items)
-            results[item] = $(`#${item}`).val(this.#storage.getStorage(item))[0]?.value;
+    #updateRadio() {
+        this.#saveData({PKCE : $('#PKCE').is(':checked')});
+    }
+
+    #restoreData(key) {
+
+        let results = {
+            appName : this.#appName,
+            redirectUri : this.#redirect_uri
+        };
+
+        if(key) {
+            results = this.#storage.getStorage(key);
+        } else {
+            for (let item of this.#items)
+                results[item] = $(`#${item}`).val(this.#storage.getStorage(item))[0]?.value;
+        }
 
         return results;
     }
 
-    #saveData() {
-        for (let item of this.#items)
+    #saveData(obj = {}) { // can backup values in { key, pair } format
+
+        if(Object.keys(obj).length)
+        {
+            for (const [key, value] of Object.entries(obj)) {
+                this.#storage.setStorage(key, value);
+            }
+        } else {
+            for (let item of this.#items)
             this.#storage.setStorage(item, $(`#${item}`).val());
+        }
     }
 
-    getEnvData() {
-        // return an array with all the saved data
-        return this.#restoreData();
+    saveEnvData(obj) {
+        if(Object.keys(obj).length)
+            this.#saveData(obj);
+    }
+
+    getEnvData(key) {
+        return this.#restoreData(key);
     }
 
     log(message) {
@@ -47,7 +73,7 @@ class Env {
 
     infoLog(message) {
         console.log("%c" + message, "color:green");
-    }    
+    }   
 
     getAdminUrl() {
         return `https://${$('#subdomain').val()}-admin.${$('#domain').val()}.com/admin/dashboard`;

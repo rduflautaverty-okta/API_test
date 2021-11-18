@@ -1,14 +1,73 @@
 class Worker {
 
     constructor() {
+        const parameters = this.#getSearchParameters();
+        this.init(parameters);
+    }
+    
+    async init(parameters) {
+
+        const state = env.getEnvData('state');
+        let idToken = parameters?.id_token;
+        const authCode = parameters?.code;
+        const clientId = env.getEnvData('clientId');
+        const clientSecret = env.getEnvData('clientSecret');
+
+        if(Object.keys(parameters).length)
+            console.log(parameters);
+
+        if(!(parameters && state !== parameters?.state))
+        {
+            if(authCode) { // exchange the auth code for an id token
+                const verifier = env.getEnvData('verifier');
+                const result = await api.exchangeCode(authCode, verifier, clientId, clientSecret);
+                console.log(result);
+                idToken = result.id_token;
+            } 
+            
+            if(idToken)  { // implicit connection
+                const result = await api.introspect(idToken, 'id_token', clientId);
+                if(result?.active)
+                    return this.#display(true);
+            }
+        }
+        return this.#display();
+    }
+
+    #display(app  = false) {
+
+        if(app) {
+            $("#logOnForm").hide();
+            $("#corsApi").show();
+        } else {
+            $("#logOnForm").show();
+            $("#corsApi").hide();
+        }
     }
 
     async connect() {
-        let userId, groupId;
+        let userId, groupId, appId, clientId, clientSecret, trustedOriginId;
 
-        // need to define the connection steps       
-        env.infoLog("1- check if user exists. If this is the case, delete it");
-        let result = await api.findUser();
+        env.infoLog("1- check if the app exists. If this is the case, delete it");
+        let result = await api.findApp();
+
+        if(result)
+            appId = result[0]?.id;
+
+        if(appId)
+        {
+            await api.deactivateApp(appId);
+            await api.deleteApp(appId);
+        }      
+
+        env.infoLog("2- (re)add the app and save clientId & secret");
+        result = await api.addOAuth2Client();
+        appId = result?.id;
+        clientId = result?.credentials?.oauthClient?.client_id;
+        clientSecret = result?.credentials?.oauthClient?.client_secret;
+
+        env.infoLog("3- check if user exists. If this is the case, delete it");
+        result = await api.findUser();
 
         if(result)
             userId = result[0]?.id;
@@ -19,14 +78,14 @@ class Worker {
             await api.deleteUser(userId);
         }       
 
-        env.infoLog("2- (re)create the user, save userId");
+        env.infoLog("4- (re)create the user, save userId");
         result = await api.createActivatedUser();
         userId = result?.id;
 
-        env.infoLog("3- enroll the user in MFA (security questions)");
+        env.infoLog("5- enroll the user in MFA (security questions)");
         await api.enrollSecurityQuestions(userId);
 
-        env.infoLog("4- list factors and verify enrollments");
+        env.infoLog("6- list factors and verify enrollments");
         let factors = await api.listFactors(userId);
 
         for(let factor of factors) {
@@ -42,19 +101,7 @@ class Worker {
             }
         }
 
-        env.infoLog("5- authenticates a user with credentials and retrieve session token");
-        result = await api.authenticate();
-        let sessionToken = result?.sessionToken;
-
-        env.infoLog("6- create and session with the session token");
-        result = await api.createSession(sessionToken);
-        const sessionId = result?.id;
-        console.warn(`sessionId is ${sessionId}`);
-
-        env.infoLog("7- validate session");
-        await api.validateSession(sessionId);
-
-        env.infoLog("8- check if cors testers group exists. If this is the case, delete it");
+        env.infoLog("7- check if cors testers group exists. If this is the case, delete it");
         result = await api.findGroup();
 
         if(result)
@@ -63,17 +110,51 @@ class Worker {
         if(groupId)
             await api.removeGroup(groupId);    
 
-        env.infoLog("9- (re)create the group, save groupId");
+        env.infoLog("8- (re)create the group, save groupId");
         result = await api.addGroup();
         groupId = result?.id;
 
-        env.infoLog("10- add user to the group");
-        await api.addUserToGroup(groupId, userId);        
+        env.infoLog("9- add user to the group");
+        await api.addUserToGroup(groupId, userId);
 
-        env.infoLog("access to the app is granted");
-        $("#logOnForm").hide();
-        $("#corsApi").show();
+        env.infoLog("10- assign group to the app");
+        await api.assignGroupToApp(appId, groupId);
 
+        env.infoLog("11- check if the app is cors enabled. If this is the case, delete trusted origin");
+        result = await api.findtrustedOrigin();
+
+        if(result)
+            trustedOriginId = result[0]?.id;
+
+        if(trustedOriginId)
+        {
+            await api.deactivateOrigin(trustedOriginId);
+            await api.deleteOrigin(trustedOriginId);
+        }      
+
+        env.infoLog("12- (re)add trusted origin");
+        await api.addTrustedOrigin();
+
+        env.infoLog("13- delete any open session");
+        try {
+            await api.closeCurrentSession();
+            console.log('Clossing opened session..');
+        } catch (e) {
+            console.log('No session is currently open..');
+        }
+
+        env.infoLog("14- authenticates the user with credentials and retrieve session token");
+        result = await api.authenticate();
+        let sessionToken = result?.sessionToken;
+        
+        env.infoLog("Finally, request access to the app..");
+        env.saveEnvData({ clientId : clientId, clientSecret : clientSecret });
+
+
+        if(JSON.parse(env.getEnvData('PKCE')))
+            api.getAuthCode(clientId, sessionToken);  // Authorization Code with PKCE
+        else
+            api.getIdToken(clientId, sessionToken);   // implicit connection
     }
 
     disconnect() {
@@ -83,11 +164,25 @@ class Worker {
 
         $("#logOnForm").show();
         $("#corsApi").hide();
-
     }
 
-    finder
+    #getSearchParameters(){
+        let result = {};
+        let hashParam = window.location.hash?.substring(1) || window.location.search?.substring(1);
 
+        if(hashParam)
+        {
+            let params = hashParam.split("&");    
+            $.each(params, function (index, set) {
+                let paramSet = set.split("=");
+                if (typeof (paramSet[1]) !== "undefined")
+                    result[paramSet[0]] = decodeURIComponent(paramSet[1]);
+            });
+        }
+
+        return result;
+    }
+ 
     getCurrentSession() {
         api.getCurrentSession();
 
