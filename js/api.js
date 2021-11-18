@@ -404,11 +404,12 @@ class API {
         window.open( url /*,'_self'*/);
     }
 
-    getAuthCode(clientId, sessionToken) {
+    async getAuthCode(clientId, sessionToken) {
 
         const data = this.#updateUserData();
-        const verifier = "M25iVXpKU3puUjFaYWg3T1NDTDQtcW1ROUY5YXlwalNoc0hhakxifmZHag";
-        const challenge = "qjrzSW9gMiUgpUvqgEPE4_-8swvyCtfOVvg55o5S_es";
+        const verifier = this.#randomCharacters(50);
+        const hash = await this.#sha256(verifier);
+        const challenge = this.#toBase64Url(hash);
  
         const params = {
             client_id : clientId,
@@ -429,7 +430,7 @@ class API {
         window.open( url /*,'_self'*/);
     }
 
-    exchangeCode(authCode, verifier, clientId) {
+    async exchangeCode(authCode, verifier, clientId) {
 
         const data = this.#updateUserData();
 
@@ -441,6 +442,11 @@ class API {
             redirect_uri : data.redirectUri
         };
 
+        // display the challenge to compare it with login page
+        const hash = await this.#sha256(verifier);
+        const challenge = this.#toBase64Url(hash);
+        console.log('challenge', challenge);
+
         return this.#post(this.#buildQueryUrl(`token`, params, true), '','', true, true);
     }
     
@@ -448,9 +454,10 @@ class API {
 
         const params = {
             client_id : clientId,
-            token : token,            
+            token : token,
             token_type_hint: hint
         };
+
         return this.#post(this.#buildQueryUrl(`introspect`, params, true),'','', true, true);
     }
 
@@ -465,6 +472,17 @@ class API {
             result += randomChars.charAt(Math.floor(Math.random() * randomChars.length));
         }
         return result;
+    }
+
+    #sha256(verifier) {
+        const encoder = new TextEncoder();
+        const data = encoder.encode(verifier);
+        return window.crypto.subtle.digest('SHA-256', data);
+    }
+
+    #toBase64Url(hash) {
+        const base64Hash = btoa(String.fromCharCode.apply(null, new Uint8Array(hash)))
+        return base64Hash.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
     }
 }
 

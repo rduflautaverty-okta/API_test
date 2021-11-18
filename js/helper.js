@@ -15,7 +15,7 @@ exports.verifytoken = (req, res, next) => {
 
         const header = req.headers['authorization'];
 
-          if (header.substring(0, 6).toUpperCase() == 'BEARER') {
+          if (header?.substring(0, 6).toUpperCase() == 'BEARER') {
             const token = header.split(' ')[1];
             oktaJwtVerifier.verifyAccessToken(token, 'api://default')
             .then(jwt => next())

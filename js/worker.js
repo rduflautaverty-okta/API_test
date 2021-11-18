@@ -21,18 +21,22 @@ class Worker {
         {
             if(authCode) { // exchange the auth code for an id token
                 const verifier = env.getEnvData('verifier');
+                env.infoLog("exchange authorization code for access and id tokens");
                 const result = await api.exchangeCode(authCode, verifier, clientId);
                 accessToken = result?.access_token;
                 idToken = result?.id_token;
             } 
             
             if(idToken && accessToken)  { // implicit connection
-                const isIdTokenActive = await api.introspect(idToken, 'id_token', clientId);
+                env.infoLog("introspect access token");
                 const isAccessTokenActive = await api.introspect(accessToken, 'access_token', clientId);
+                env.infoLog("introspect id_token");
+                const isIdTokenActive = await api.introspect(idToken, 'id_token', clientId);
 
                 if(isIdTokenActive?.active && isAccessTokenActive?.active)
                 {
                     // everything is ok, so we can get the user info and display the app
+                    env.infoLog("get user info");
                     api.userInfo(accessToken);
                     return this.#display(true);
                 }                    
