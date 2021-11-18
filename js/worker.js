@@ -6,12 +6,13 @@ class Worker {
     }
     
     async init(parameters) {
+        
+        let accessToken = parameters?.access_token;
+        let idToken = parameters?.id_token;        
+        const authCode = parameters?.code;
 
         const state = env.getEnvData('state');
-        let idToken = parameters?.id_token;
-        const authCode = parameters?.code;
         const clientId = env.getEnvData('clientId');
-        const clientSecret = env.getEnvData('clientSecret');
 
         if(Object.keys(parameters).length)
             console.log(parameters);
@@ -20,15 +21,21 @@ class Worker {
         {
             if(authCode) { // exchange the auth code for an id token
                 const verifier = env.getEnvData('verifier');
-                const result = await api.exchangeCode(authCode, verifier, clientId, clientSecret);
-                console.log(result);
-                idToken = result.id_token;
+                const result = await api.exchangeCode(authCode, verifier, clientId);
+                accessToken = result?.access_token;
+                idToken = result?.id_token;
             } 
             
-            if(idToken)  { // implicit connection
-                const result = await api.introspect(idToken, 'id_token', clientId);
-                if(result?.active)
+            if(idToken && accessToken)  { // implicit connection
+                const isIdTokenActive = await api.introspect(idToken, 'id_token', clientId);
+                const isAccessTokenActive = await api.introspect(accessToken, 'access_token', clientId);
+
+                if(isIdTokenActive?.active && isAccessTokenActive?.active)
+                {
+                    // everything is ok, so we can get the user info and display the app
+                    api.userInfo(accessToken);
                     return this.#display(true);
+                }                    
             }
         }
         return this.#display();
@@ -46,7 +53,7 @@ class Worker {
     }
 
     async connect() {
-        let userId, groupId, appId, clientId, clientSecret, trustedOriginId;
+        let userId, groupId, appId, clientId, trustedOriginId;
 
         env.infoLog("1- check if the app exists. If this is the case, delete it");
         let result = await api.findApp();
@@ -64,7 +71,6 @@ class Worker {
         result = await api.addOAuth2Client();
         appId = result?.id;
         clientId = result?.credentials?.oauthClient?.client_id;
-        clientSecret = result?.credentials?.oauthClient?.client_secret;
 
         env.infoLog("3- check if user exists. If this is the case, delete it");
         result = await api.findUser();
@@ -148,7 +154,7 @@ class Worker {
         let sessionToken = result?.sessionToken;
         
         env.infoLog("Finally, request access to the app..");
-        env.saveEnvData({ clientId : clientId, clientSecret : clientSecret });
+        env.saveEnvData({ clientId : clientId });
 
 
         if(JSON.parse(env.getEnvData('PKCE')))

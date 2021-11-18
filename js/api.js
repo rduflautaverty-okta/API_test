@@ -13,7 +13,7 @@ class API {
         const envData = env.getEnvData();
         envData.groupname = 'Cors Test Users';
         envData.securityResponse = 'pasta';
-        envData.authorization = { Authorization: 'SSWS ' + envData.apiKey };
+        envData.authorization = { Authorization : 'SSWS ' + envData.apiKey };
         return envData;
     }
 
@@ -43,6 +43,7 @@ class API {
 
         if(params)
             console.log('Body: ', params);
+
         let appType = urlEncode? 'application/x-www-form-urlencoded' : "application/json";
         const targetEndPoint = corsByPass ? {'Target-Endpoint': apiUrl} : '';
         appType += "; charset=utf-8";
@@ -388,7 +389,7 @@ class API {
 
         const params = {
             client_id : clientId,
-            response_type : 'id_token',
+            response_type : 'id_token token',
             scope : "profile openid email",
             prompt : 'none',
             redirect_uri : data.redirectUri,
@@ -428,7 +429,7 @@ class API {
         window.open( url /*,'_self'*/);
     }
 
-    exchangeCode(authCode, verifier, clientId, clientSecret) {
+    exchangeCode(authCode, verifier, clientId) {
 
         const data = this.#updateUserData();
 
@@ -445,14 +446,16 @@ class API {
     
     introspect(token, hint, clientId) {
 
-        const data = this.#updateUserData();
-
         const params = {
             client_id : clientId,
             token : token,            
             token_type_hint: hint
         };
         return this.#post(this.#buildQueryUrl(`introspect`, params, true),'','', true, true);
+    }
+
+    userInfo(accessToken) {
+        return this.#post(this.#buildQueryUrl(`userinfo`,'', true),'',{ Authorization : `Bearer ${accessToken}`}, true, true);
     }
 
     #randomCharacters(length = 10) {
