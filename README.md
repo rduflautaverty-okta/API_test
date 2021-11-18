@@ -23,5 +23,7 @@ The app will create a new user and a test group, if the user or the gruop alread
 Once connected, the app will display the list of cors enabled APIs, exept the users: List users api which does not support cors (this one can be used to display the common cors error message in the console). Some of the endpoints require you to be logged into your org in your browser, as they rely on a valid active session cookie.
 ## Common issues
 - you should enable 3rd party cookies in your browser
+- an error 400 or 404 can happen if your org does not have some feature activated (like email authentication)
+- read the error message from the console for more info on any issue
 
 https://developer.okta.com
