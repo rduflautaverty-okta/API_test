@@ -481,7 +481,7 @@ class API {
     }
 
     #toBase64Url(hash) {
-        const base64Hash = btoa(String.fromCharCode.apply(null, new Uint8Array(hash)))
+        const base64Hash = window.btoa(String.fromCharCode.apply(null, new Uint8Array(hash)));
         return base64Hash.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
     }
 }
