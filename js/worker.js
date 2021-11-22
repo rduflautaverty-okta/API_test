@@ -168,10 +168,9 @@ class Worker {
     }
 
     disconnect() {
-        // need to define the disconnection steps
-        // get a new token
-        // create user
 
+        // sign out
+        api.closeCurrentSession();
         $("#logOnForm").show();
         $("#corsApi").hide();
     }
