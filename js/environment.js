@@ -2,7 +2,7 @@ class Env {
 
     #appName = 'cors_api_test';
     #storage = new Storage(this.#appName);
-    #redirect_uri = "http://localhost:28550/";
+    #redirect_uri = "http://localhost:28550";
     #items;
 
     constructor() {
