@@ -3,4 +3,4 @@ BASEDIR=$(dirname $(realpath "$0"))
 cd "$BASEDIR"
 
 Node server.js &
-Open "http://localhost:28550" &
+Open "http://localhost:28550"
