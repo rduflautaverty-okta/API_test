@@ -4,11 +4,11 @@ class Worker {
         const parameters = this.#getSearchParameters();
         this.init(parameters);
     }
-    
+
     async init(parameters) {
-        
+
         let accessToken = parameters?.access_token;
-        let idToken = parameters?.id_token;        
+        let idToken = parameters?.id_token;
         const authCode = parameters?.code;
 
         const state = env.getEnvData('state');
@@ -25,8 +25,8 @@ class Worker {
                 const result = await api.exchangeCode(authCode, verifier, clientId);
                 accessToken = result?.access_token;
                 idToken = result?.id_token;
-            } 
-            
+            }
+
             if(idToken && accessToken)  { // implicit connection
                 env.infoLog("introspect access token");
                 const isAccessTokenActive = await api.introspect(accessToken, 'access_token', clientId);
@@ -39,7 +39,7 @@ class Worker {
                     env.infoLog("get user info");
                     api.userInfo(accessToken);
                     return this.#display(true);
-                }                    
+                }
             }
         }
         return this.#display();
@@ -69,9 +69,9 @@ class Worker {
         {
             await api.deactivateApp(appId);
             await api.deleteApp(appId);
-        }      
+        }
 
-        env.infoLog("2- (re)add the app and save clientId & secret");
+        env.infoLog("2- (re)add the app and save clientId");
         result = await api.addOAuth2Client();
         appId = result?.id;
         clientId = result?.credentials?.oauthClient?.client_id;
@@ -86,7 +86,7 @@ class Worker {
         {
             await api.deactivateUser(userId);
             await api.deleteUser(userId);
-        }       
+        }
 
         env.infoLog("4- (re)create the user, save userId");
         result = await api.createActivatedUser();
@@ -118,7 +118,7 @@ class Worker {
             groupId = result[0]?.id;
 
         if(groupId)
-            await api.removeGroup(groupId);    
+            await api.removeGroup(groupId);
 
         env.infoLog("8- (re)create the group, save groupId");
         result = await api.addGroup();
@@ -140,7 +140,7 @@ class Worker {
         {
             await api.deactivateOrigin(trustedOriginId);
             await api.deleteOrigin(trustedOriginId);
-        }      
+        }
 
         env.infoLog("12- (re)add trusted origin");
         await api.addTrustedOrigin();
@@ -156,7 +156,7 @@ class Worker {
         env.infoLog("14- authenticates the user with credentials and retrieve session token");
         result = await api.authenticate();
         let sessionToken = result?.sessionToken;
-        
+
         env.infoLog("Finally, request access to the app..");
         env.saveEnvData({ clientId : clientId });
 
@@ -181,7 +181,7 @@ class Worker {
 
         if(hashParam)
         {
-            let params = hashParam.split("&");    
+            let params = hashParam.split("&");
             $.each(params, function (index, set) {
                 let paramSet = set.split("=");
                 if (typeof (paramSet[1]) !== "undefined")
@@ -191,7 +191,7 @@ class Worker {
 
         return result;
     }
- 
+
     getCurrentSession() {
         api.getCurrentSession();
 
@@ -210,7 +210,7 @@ class Worker {
         // get the list of features and get each id
         const features = await api.listFeatures();
 
-        for(let feature of features)        
+        for(let feature of features)
             api.getFeature(feature?.id);
     }
 
