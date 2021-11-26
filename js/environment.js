@@ -38,7 +38,7 @@ class Env {
             results[item] = $(`#${item}`).val(this.#storage.getStorage(item))[0]?.value;
 
         if(key)
-            results = results[key];
+            results = results[key] || null;
 
         return results;
     }
