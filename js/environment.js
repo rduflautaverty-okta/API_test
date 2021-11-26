@@ -7,13 +7,13 @@ class Env {
 
     constructor() {
 
-        this.#items = $('.userUi').map(function() { return $(this).attr('id') }).get();            
+        this.#items = $('.userUi').map(function() { return $(this).attr('id') }).get();
         $('.userUi').change(() => this.#saveData());
         $('#fname').change(() => this.#updateUserName());
         $('#lname').change(() => this.#updateUserName());
         $('#implicit').change(() => this.#updateRadio());
         $('#PKCE').change(() => this.#updateRadio());
-        
+
         // data is stored as string so we need to parse it
         $("#implicit").prop("checked", !JSON.parse(this.#restoreData('PKCE')));
         $("#PKCE").prop("checked", JSON.parse(this.#restoreData('PKCE')));
@@ -34,12 +34,11 @@ class Env {
             redirectUri : this.#redirect_uri
         };
 
-        if(key) {
-            results = this.#storage.getStorage(key);
-        } else {
-            for (let item of this.#items)
-                results[item] = $(`#${item}`).val(this.#storage.getStorage(item))[0]?.value;
-        }
+        for (let item of this.#items)
+            results[item] = $(`#${item}`).val(this.#storage.getStorage(item))[0]?.value;
+
+        if(key)
+            results = results[key];
 
         return results;
     }
@@ -73,7 +72,7 @@ class Env {
 
     infoLog(message) {
         console.log("%c" + message, "color:green");
-    }   
+    }
 
     getAdminUrl() {
         return `https://${$('#subdomain').val()}-admin.${$('#domain').val()}.com/admin/dashboard`;
