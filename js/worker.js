@@ -57,10 +57,20 @@ class Worker {
     }
 
     async connect() {
-        let userId, groupId, appId, clientId, trustedOriginId;
+        let result, userId, groupId, appId, clientId, trustedOriginId;
 
         env.infoLog("1- check if the app exists. If this is the case, delete it");
-        let result = await api.findApp();
+        try{
+           result = await api.findApp();
+       } catch(e) {
+           switch(e.status) {
+               case 404:
+                 console.log(e);
+                 break;
+               default:
+                   console.error(e);
+           }
+       }
 
         if(result)
             appId = result[0]?.id;
