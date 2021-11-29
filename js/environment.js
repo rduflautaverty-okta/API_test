@@ -8,6 +8,8 @@ class Env {
     constructor() {
 
         this.#items = $('.userUi').map(function() { return $(this).attr('id') }).get();
+        this.#saveData({appName : this.#appName, redirectUri : this.#redirect_uri});
+        
         $('.userUi').change(() => this.#saveData());
         $('#fname').change(() => this.#updateUserName());
         $('#lname').change(() => this.#updateUserName());
@@ -28,19 +30,10 @@ class Env {
     }
 
     #restoreData(key) {
-
-        let results = {
-            appName : this.#appName,
-            redirectUri : this.#redirect_uri
-        };
-
         for (let item of this.#items)
-            results[item] = $(`#${item}`).val(this.#storage.getStorage(item))[0]?.value;
+            $(`#${item}`).val(this.#storage.getStorage(item))[0]?.value;
 
-        if(key)
-            results = results[key] || null;
-
-        return results;
+        return this.#storage.getStorage(key);
     }
 
     #saveData(obj = {}) { // can backup values in { key, pair } format
@@ -52,7 +45,7 @@ class Env {
             }
         } else {
             for (let item of this.#items)
-            this.#storage.setStorage(item, $(`#${item}`).val());
+              this.#storage.setStorage(item, $(`#${item}`).val());
         }
     }
 
